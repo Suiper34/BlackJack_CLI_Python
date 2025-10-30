@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import List
 
+from utils.utils import best_total
+
 
 class GameAction(Enum):
     HIT = auto()
@@ -21,6 +23,10 @@ class RoundOutcome(Enum):
 class Participant:
     name: str
     hand: List[int] = field(default_factory=list)
+
+    @property
+    def total(self) -> int:
+        return best_total(self.hand)
 
     def add_card(self, card: int) -> None:
         self.hand.append(card)
