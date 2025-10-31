@@ -1,7 +1,8 @@
 import random
 from typing import Sequence
 
-from data_models.data_models import (GameAction, Participant, RoundOutcome)
+from data_models.data_models import (GameAction, GameStats, Participant,
+                                     RoundOutcome)
 from exceptions.invalid_input import InvalidInputError
 from exceptions.user_exit import UserExit
 from utils.utils import (BLACKJACK, DEALER_STAND_THRESHOLD, MINIMUM_BET,
@@ -73,7 +74,7 @@ def prompt_player_action() -> GameAction:
 def player_turn(
     player: Participant,
     deck: Sequence[int],
-    rng: random.Random
+    random_card: random.Random
 ) -> None:
     """Handle the player's turn, allowing hits until they stand or bust."""
 
@@ -85,7 +86,7 @@ def player_turn(
             print('You chose to stand.')
             break
 
-        new_card = draw_card(deck, rng)
+        new_card = draw_card(deck, random_card)
         player.add_card(new_card)
         print(f'You drew a {new_card}.')
 
@@ -97,7 +98,7 @@ def player_turn(
 def dealer_turn(
     dealer: Participant,
     deck: Sequence[int],
-    rng: random.Random
+    random_card: random.Random
 ) -> None:
     """Handle the dealer's turn following standard Blackjack rules."""
 
@@ -105,7 +106,7 @@ def dealer_turn(
         f'\nDealer reveals hand: {format_hand(dealer)} (Total: {dealer.total})'
     )
     while dealer.total < DEALER_STAND_THRESHOLD:
-        new_card = draw_card(deck, rng)
+        new_card = draw_card(deck, random_card)
         dealer.add_card(new_card)
         print(
             f'Dealer draws a {new_card}. Dealer total is now {dealer.total}.')
@@ -177,3 +178,47 @@ def describe_outcome(
         RoundOutcome.PUSH: 'It\'s a push.',
     }
     print(messages[outcome])
+
+
+def play_round(
+    balance: int,
+    player: Participant,
+    dealer: Participant,
+    stats: GameStats,
+    deck: Sequence[int],
+    random_card: random.Random,
+) -> int:
+    """Play a single round of Blackjack and return the updated balance."""
+
+    player.clear_hand()
+    dealer.clear_hand()
+
+    wager = prompt_wager(balance)
+    print(f'\nWager accepted: {wager} credits.\n')
+
+    # Initial deal
+    for _ in range(2):
+        player.add_card(draw_card(deck, random_card))
+        dealer.add_card(draw_card(deck, random_card))
+
+    print(f'Dealer shows: {format_hand(dealer, concealed_second_card=True)}')
+    print(f'Your hand:    {format_hand(player)} (Total: {player.total})')
+
+    if player.total == BLACKJACK and len(player.hand) == 2:
+        print('Natural Blackjack!')
+
+    else:
+        player_turn(player, deck, random_card)
+        if player.total <= BLACKJACK:
+            dealer_turn(dealer, deck, random_card)
+
+    outcome = evaluate_round(player, dealer)
+    stats.record(outcome)
+    describe_outcome(outcome, player, dealer)
+    new_balance = apply_outcome(outcome, balance, wager)
+
+    print(f'New balance: {new_balance} credits.\n')
+    print(stats.score_board())
+    print('-' * 40)
+
+    return new_balance
