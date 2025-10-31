@@ -155,3 +155,25 @@ def apply_outcome(outcome: RoundOutcome, balance: int, wager: int) -> int:
 
     print('Push! Your wager is returned.')
     return balance
+
+
+def describe_outcome(
+    outcome: RoundOutcome,
+    player: Participant,
+    dealer: Participant
+) -> None:
+    """Print the round scores."""
+
+    print('\n--- Round Score ---')
+    print(f'Your hand:   {format_hand(player)} (Total: {player.total})')
+    print(f'Dealer hand: {format_hand(dealer)} (Total: {dealer.total})')
+
+    messages = {
+        RoundOutcome.PLAYER_BLACKJACK: 'Blackjack! 🎉',
+        RoundOutcome.PLAYER_WIN: 'You beat the dealer!',
+        RoundOutcome.DEALER_BUST: 'Dealer busts. You win!',
+        RoundOutcome.DEALER_WIN: 'Dealer wins this round.',
+        RoundOutcome.PLAYER_BUST: 'You busted!...Better luck next time',
+        RoundOutcome.PUSH: 'It\'s a push.',
+    }
+    print(messages[outcome])
