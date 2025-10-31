@@ -1,6 +1,11 @@
+import random
+from typing import Sequence
+
+from data_models.data_models import GameAction, Participant
 from exceptions.invalid_input import InvalidInputError
 from exceptions.user_exit import UserExit
-from utils.utils import MINIMUM_BET, safe_input
+from utils.utils import (BLACKJACK, DEALER_STAND_THRESHOLD, MINIMUM_BET,
+                         draw_card, format_hand, safe_input)
 
 
 def prompt_yes_no(prompt: str) -> bool:
@@ -48,3 +53,62 @@ def prompt_wager(balance: int) -> int:
             continue
 
         return wager
+
+
+def prompt_player_action() -> GameAction:
+    """Prompt the player to hit or stand."""
+
+    while True:
+        response = safe_input('Hit or Stand? (h/s): ').strip().lower()
+
+        if response in {'h', 'hit'}:
+            return GameAction.HIT
+
+        if response in {'s', 'stand'}:
+            return GameAction.STAND
+
+        print('Please choose \'h\' to hit or \'s\' to stand.')
+
+
+def player_turn(
+    player: Participant,
+    deck: Sequence[int],
+    rng: random.Random
+) -> None:
+    """Handle the player's turn, allowing hits until they stand or bust."""
+
+    while player.total < BLACKJACK:
+        print(f'\nYour hand: {format_hand(player)} (Total: {player.total})')
+        action = prompt_player_action()
+
+        if action is GameAction.STAND:
+            print('You chose to stand.')
+            break
+
+        new_card = draw_card(deck, rng)
+        player.add_card(new_card)
+        print(f'You drew a {new_card}.')
+
+        if player.total > BLACKJACK:
+            print(f'Bust! Your total is {player.total}.')
+            break
+
+
+def dealer_turn(
+    dealer: Participant,
+    deck: Sequence[int],
+    rng: random.Random
+) -> None:
+    """Handle the dealer's turn following standard Blackjack rules."""
+
+    print(
+        f'\nDealer reveals hand: {format_hand(dealer)} (Total: {dealer.total})'
+    )
+    while dealer.total < DEALER_STAND_THRESHOLD:
+        new_card = draw_card(deck, rng)
+        dealer.add_card(new_card)
+        print(
+            f'Dealer draws a {new_card}. Dealer total is now {dealer.total}.')
+
+    if dealer.total > BLACKJACK:
+        print('Dealer busts!')
