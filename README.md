@@ -65,6 +65,8 @@ A suite of helper functions handles `input validation`, `card drawing`, `scoring
 
 ## 📄 License
 
-This project is released under the MIT License. See [`LICENSE`](https://github.com/Suiper34) for details.
+This project is released under the MIT License. See [`LICENSE`][def] for details.
 
 Enjoy refining and extending your Blackjack experience!
+
+[def]: ./LICENSE
